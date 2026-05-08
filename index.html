@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinWise - Controle de Despesas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .expense-item {
+            transition: all 0.3s ease;
+        }
+
+        .expense-item:hover {
+            transform: translateX(5px);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-left: 4px solid #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 fade-in">
+        <div class="w-full max-w-md">
+            <div class="bg-white rounded-20 p-8 card-shadow">
+                <div class="text-center mb-8">
+                    <i class="fas fa-wallet text-5xl text-purple-600 mb-4"></i>
+                    <h1 class="text-4xl font-bold text-gray-800">FinWise</h1>
+                    <p class="text-gray-500 mt-2">Controle suas despesas com inteligência</p>
+                </div>
+
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="loginEmail" class="input-field" placeholder="seu@email.com" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                        <input type="password" id="loginPassword" class="input-field" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary text-white font-bold py-3 rounded-lg mt-6">
+                        Entrar
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <p class="text-center text-gray-600 text-sm mb-4">
+                        Não tem conta?
+                    </p>
+                    <button type="button" id="showRegisterBtn" class="w-full border-2 border-purple-600 text-purple-600 font-bold py-3 rounded-lg hover:bg-purple-50 transition">
+                        Criar Nova Conta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="min-h-screen flex items-center justify-center p-4 fade-in hidden">
+        <div class="w-full max-w-md">
+            <div class="bg-white rounded-20 p-8 card-shadow">
+                <div class="text-center mb-8">
+                    <i class="fas fa-user-plus text-5xl text-purple-600 mb-4"></i>
+                    <h1 class="text-3xl font-bold text-gray-800">Criar Conta</h1>
+                </div>
+
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                        <input type="text" id="registerName" class="input-field" placeholder="Seu Nome" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="registerEmail" class="input-field" placeholder="seu@email.com" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                        <input type="password" id="registerPassword" class="input-field" placeholder="••••••••" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
+                        <input type="password" id="registerPasswordConfirm" class="input-field" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="w-full btn-primary text-white font-bold py-3 rounded-lg mt-6">
+                        Criar Conta
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <button type="button" id="showLoginBtn" class="w-full border-2 border-purple-600 text-purple-600 font-bold py-3 rounded-lg hover:bg-purple-50 transition">
+                        Voltar ao Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="appScreen" class="min-h-screen p-4 hidden">
+        <!-- Header -->
+        <div class="max-w-6xl mx-auto mb-8">
+            <div class="flex justify-between items-center bg-white rounded-15 p-6 card-shadow">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">
+                        <i class="fas fa-wallet text-purple-600 mr-3"></i>FinWise
+                    </h1>
+                    <p class="text-gray-600 mt-1">Bem-vindo, <span id="userName" class="font-semibold"></span>!</p>
+                </div>
+                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="max-w-6xl mx-auto mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Gasto Total -->
+                <div class="stat-card rounded-15 p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Gasto Total (Mês)</p>
+                            <p class="text-3xl font-bold text-red-600 mt-2">R$ <span id="totalExpense">0.00</span></p>
+                        </div>
+                        <i class="fas fa-arrow-trending-up text-4xl text-red-500 opacity-20"></i>
+                    </div>
+                </div>
+
+                <!-- Categorias -->
+                <div class="stat-card rounded-15 p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Categorias</p>
+                            <p class="text-3xl font-bold text-purple-600 mt-2"><span id="categoryCount">0</span></p>
+                        </div>
+                        <i class="fas fa-th text-4xl text-purple-500 opacity-20"></i>
+                    </div>
+                </div>
+
+                <!-- Transações -->
+                <div class="stat-card rounded-15 p-6 card-shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Transações</p>
+                            <p class="text-3xl font-bold text-blue-600 mt-2"><span id="transactionCount">0</span></p>
+                        </div>
+                        <i class="fas fa-exchange text-4xl text-blue-500 opacity-20"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Add Expense -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-15 p-6 card-shadow sticky top-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-plus-circle text-purple-600 mr-2"></i>Nova Despesa
+                    </h2>
+
+                    <form id="expenseForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                            <input type="text" id="expenseDescription" class="input-field" placeholder="Ex: Supermercado" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Valor (R$)</label>
+                            <input type="number" id="expenseAmount" class="input-field" placeholder="0.00" step="0.01" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                            <select id="expenseCategory" class="input-field" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="Alimentação">🍔 Alimentação</option>
+                                <option value="Transporte">🚗 Transporte</option>
+                                <option value="Saúde">⚕️ Saúde</option>
+                                <option value="Educação">📚 Educação</option>
+                                <option value="Lazer">🎮 Lazer</option>
+                                <option value="Moradia">🏠 Moradia</option>
+                                <option value="Utilidades">💡 Utilidades</option>
+                                <option value="Outros">📦 Outros</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                            <input type="date" id="expenseDate" class="input-field" required>
+                        </div>
+
+                        <button type="submit" class="w-full btn-primary text-white font-bold py-3 rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Adicionar Despesa
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column - Expenses List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-15 p-6 card-shadow">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            <i class="fas fa-list text-purple-600 mr-2"></i>Despesas do Mês
+                        </h2>
+                        <select id="monthFilter" class="input-field w-48">
+                            <option value="">Todos os meses</option>
+                        </select>
+                    </div>
+
+                    <div id="expensesList" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>Nenhuma despesa registrada</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Summary -->
+                <div class="bg-white rounded-15 p-6 card-shadow mt-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-chart-pie text-purple-600 mr-2"></i>Resumo por Categoria
+                    </h2>
+                    <div id="categorySummary" class="space-y-3">
+                        <div class="empty-state">
+                            <p>Sem dados para exibir</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
